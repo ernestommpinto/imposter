@@ -1,0 +1,709 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Impostor Local</title>
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --yellow: #ffd21f;
+      --red: #ff2f5f;
+      --purple: #8b5cf6;
+      --blue: #22d3ee;
+      --green: #22c55e;
+      --dark: #070814;
+      --white: #ffffff;
+      --muted: #b9c0d4;
+      --glass: rgba(7, 10, 24, 0.78);
+      --border: rgba(255, 255, 255, 0.16);
+    }
+
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    html, body { min-height: 100%; margin: 0; }
+
+    body {
+      font-family: Inter, Arial, sans-serif;
+      color: white;
+      background: #070814 url("img/fundo.png") center center / cover fixed no-repeat;
+      user-select: none;
+      touch-action: manipulation;
+      overflow-x: hidden;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background: linear-gradient(180deg, rgba(0,0,0,.12), rgba(0,0,0,.88));
+    }
+
+    button, input, select { font-family: inherit; }
+
+    .app { width: 100%; max-width: 520px; min-height: 100dvh; margin: 0 auto; padding: 14px; display: flex; flex-direction: column; }
+    .topbar { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 12px; }
+    .brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+    .brand img { width: 60px; height: 60px; object-fit: contain; filter: drop-shadow(0 10px 18px rgba(0,0,0,.65)); }
+    .brand-title { font-weight: 950; letter-spacing: -0.05em; line-height: 1; }
+    .brand-subtitle { color: var(--muted); font-size: .78rem; font-weight: 800; margin-top: 4px; }
+
+    .round-box {
+      text-align: right;
+      background: rgba(0,0,0,.35);
+      border: 1px solid var(--border);
+      padding: 8px 12px;
+      border-radius: 18px;
+      font-size: .74rem;
+      font-weight: 850;
+      line-height: 1.4;
+      white-space: nowrap;
+    }
+
+    .screen { display: none; flex: 1; animation: enter .18s ease-out; }
+    .screen.active { display: flex; flex-direction: column; }
+    @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+    .card-glass {
+      background: var(--glass);
+      border: 1px solid var(--border);
+      border-radius: 28px;
+      padding: 20px;
+      box-shadow: 0 22px 70px rgba(0,0,0,.55);
+      backdrop-filter: blur(16px);
+    }
+
+    .image-screen {
+      min-height: calc(100dvh - 100px);
+      border-radius: 32px;
+      overflow: hidden;
+      border: 1px solid var(--border);
+      box-shadow: 0 28px 90px rgba(0,0,0,.65);
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+    }
+
+    .presentation-bg { background: #070814 url("img/apresentacao.png") center top / cover no-repeat; }
+    .loading-bg { background: #070814 url("img/inicio.png") center center / cover no-repeat; }
+
+    .image-screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, rgba(0,0,0,.04), rgba(0,0,0,.12) 52%, rgba(0,0,0,.90));
+    }
+
+    .image-content { position: relative; z-index: 1; padding: 22px; }
+    .title-big { font-size: clamp(2.2rem, 10vw, 4.2rem); line-height: .9; font-weight: 950; letter-spacing: -0.07em; text-shadow: 0 12px 34px rgba(0,0,0,.75); }
+    .title { font-size: clamp(1.9rem, 8vw, 3rem); line-height: .95; font-weight: 950; letter-spacing: -0.06em; }
+    .text-muted-game { color: var(--muted); font-weight: 650; line-height: 1.55; }
+
+    .btn-game {
+      width: 100%; border: 0; border-radius: 22px; padding: 16px 18px; color: white;
+      background: linear-gradient(135deg, #ffd21f, #fb923c, #ff2f5f);
+      box-shadow: 0 16px 36px rgba(255, 210, 31, .25);
+      font-weight: 950; text-transform: uppercase; letter-spacing: -0.02em;
+    }
+
+    .btn-game.secondary { background: rgba(0,0,0,.42); border: 1px solid var(--border); box-shadow: none; }
+    .btn-game.green { background: linear-gradient(135deg, #22c55e, #14b8a6); box-shadow: 0 16px 36px rgba(34, 197, 94, .25); }
+    .btn-game.red { background: rgba(255, 47, 95, .18); border: 1px solid rgba(255, 47, 95, .38); box-shadow: none; }
+    .btn-game:active, .small-btn:active, .choice-card:active, .vote-card:active { transform: scale(.985); }
+
+    .small-btn {
+      border: 1px solid var(--border); color: white; background: rgba(0,0,0,.42);
+      border-radius: 999px; padding: 8px 12px; font-size: .78rem; font-weight: 850;
+    }
+
+    .counter { display: grid; grid-template-columns: 58px 1fr 58px; align-items: center; gap: 10px; }
+    .counter button { height: 56px; border: 0; color: white; background: rgba(255,255,255,.13); border-radius: 18px; font-size: 1.5rem; font-weight: 950; }
+    .counter-value { text-align: center; font-size: 2.4rem; font-weight: 950; letter-spacing: -0.07em; }
+
+    .choice-grid, .player-list, .score-list { display: grid; gap: 10px; }
+    .choice-card { width: 100%; text-align: left; border-radius: 22px; padding: 16px; background: rgba(0,0,0,.38); border: 1px solid var(--border); color: white; }
+    .choice-card.selected { border-color: var(--yellow); box-shadow: inset 0 0 0 1px rgba(255,210,31,.28); }
+    .choice-title { font-weight: 950; font-size: 1.02rem; }
+    .choice-desc { color: var(--muted); font-size: .88rem; font-weight: 650; margin-top: 3px; }
+
+    .input-game, .select-game { width: 100%; border-radius: 18px; border: 1px solid var(--border); background: rgba(0,0,0,.38); color: white; padding: 14px 16px; font-weight: 800; outline: none; }
+    .input-game::placeholder { color: rgba(255,255,255,.38); }
+    .player-row { display: grid; grid-template-columns: 42px 1fr; gap: 10px; align-items: center; padding: 10px; border-radius: 20px; background: rgba(0,0,0,.32); border: 1px solid var(--border); }
+    .avatar { width: 42px; height: 42px; display: grid; place-items: center; border-radius: 15px; font-weight: 950; background: linear-gradient(135deg, var(--red), var(--purple)); }
+
+    .secret-wrap { flex: 1; display: flex; flex-direction: column; justify-content: center; text-align: center; }
+    .emoji { font-size: 4.7rem; line-height: 1; }
+    .huge-word { font-size: clamp(2.4rem, 13vw, 5.2rem); font-weight: 950; letter-spacing: -0.08em; line-height: .94; text-transform: uppercase; word-break: break-word; text-shadow: 0 12px 35px rgba(0,0,0,.60); }
+    .reveal-glow { animation: pulseGlow 1s infinite alternate; }
+    @keyframes pulseGlow { from { text-shadow: 0 0 10px rgba(255,255,255,.2), 0 0 20px rgba(255,255,255,.2); } to { text-shadow: 0 0 18px rgba(255,210,31,.5), 0 0 35px rgba(255,47,95,.45); } }
+
+    .loading-bar { height: 18px; border-radius: 999px; overflow: hidden; background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.20); }
+    .loading-fill { width: 0%; height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--red), var(--yellow)); }
+    .loading-fill.run { animation: loading 5s linear forwards; }
+    @keyframes loading { from { width: 0%; } to { width: 100%; } }
+
+    .timer-circle { width: 186px; height: 186px; margin: 20px auto; border-radius: 50%; display: grid; place-items: center; background: conic-gradient(var(--yellow) var(--progress), rgba(255,255,255,.13) 0deg); box-shadow: 0 24px 60px rgba(0,0,0,.40); animation: breathe 1.4s infinite alternate; }
+    @keyframes breathe { from { transform: scale(1); } to { transform: scale(1.03); } }
+    .timer-inner { width: 150px; height: 150px; border-radius: 50%; display: grid; place-items: center; background: #0d1224; font-size: 3.1rem; font-weight: 950; }
+
+    .prompt-card { background: rgba(255,255,255,.08); border: 1px solid var(--border); border-radius: 20px; padding: 14px; font-weight: 850; }
+
+    .vote-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .vote-card { min-height: 82px; border-radius: 20px; padding: 12px; background: rgba(0,0,0,.38); border: 1px solid var(--border); color: white; font-weight: 950; }
+    .vote-card.disabled { opacity: .34; pointer-events: none; }
+
+    .progress-dots { display: grid; grid-template-columns: repeat(auto-fit, minmax(28px, 1fr)); gap: 6px; margin-top: 14px; }
+    .dot { height: 8px; border-radius: 999px; background: rgba(255,255,255,.18); }
+    .dot.done { background: var(--yellow); }
+
+    .score-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; padding: 12px; border-radius: 18px; background: rgba(0,0,0,.32); border: 1px solid var(--border); }
+    .score-row.winner { border-color: var(--yellow); box-shadow: inset 0 0 0 1px rgba(255,210,31,.28); }
+    .result-badge { display: inline-flex; justify-content: center; align-items: center; border-radius: 999px; padding: 9px 13px; font-weight: 950; border: 1px solid rgba(34,197,94,.32); background: rgba(34,197,94,.16); color: #bbf7d0; }
+
+    .ad-slot { min-height: 54px; display: grid; place-items: center; margin-top: 14px; color: rgba(255,255,255,.44); font-size: .76rem; font-weight: 850; border-radius: 18px; border: 1px dashed rgba(255,255,255,.18); background: rgba(0,0,0,.28); }
+    .shake { animation: shake .28s linear; }
+    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="topbar">
+      <div class="brand">
+        <img src="img/logo.png" alt="Impostor Local Logo">
+        <div>
+          <div class="brand-title">Impostor Local</div>
+          <div class="brand-subtitle">Trust no one</div>
+        </div>
+      </div>
+      <div class="round-box" id="roundBox">Round 1/5<br>Crew 0 · Impostor 0</div>
+    </div>
+
+    <section class="screen active" id="homeScreen">
+      <div class="image-screen presentation-bg my-auto">
+        <div class="image-content">
+          <div class="title-big mb-3">Find the impostor.</div>
+          <p class="text-muted-game mb-4">Pass the phone, reveal secret words, discuss, bluff and vote in private.</p>
+          <div class="d-grid gap-3">
+            <button class="btn-game" type="button" onclick="showScreen('setupScreen')">Start Game</button>
+            <button class="btn-game secondary" type="button" onclick="showScreen('rulesScreen')">How to Play</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="rulesScreen">
+      <div class="card-glass my-auto">
+        <div class="title mb-3">How to Play</div>
+        <div class="text-muted-game">
+          <p><b class="text-white">1.</b> Choose 4 to 10 players.</p>
+          <p><b class="text-white">2.</b> Pick a category and start the match.</p>
+          <p><b class="text-white">3.</b> Each player secretly sees one word.</p>
+          <p><b class="text-white">4.</b> One player has a different word. That player is the impostor.</p>
+          <p><b class="text-white">5.</b> Discuss, accuse and vote privately.</p>
+          <p><b class="text-white">6.</b> First side to win the 5-round match becomes champion.</p>
+        </div>
+        <div class="d-grid gap-2 mt-4">
+          <button class="btn-game" type="button" onclick="showScreen('setupScreen')">Got it</button>
+          <div class="text-center mt-3 brand-subtitle">Created by EMMTP</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="setupScreen">
+      <div class="card-glass mb-3">
+        <div class="title mb-3">Game Setup</div>
+        <label class="brand-subtitle mb-2 d-block">Players</label>
+        <div class="counter mb-3">
+          <button type="button" onclick="changePlayers(-1)">−</button>
+          <div class="counter-value" id="playerCountText">4</div>
+          <button type="button" onclick="changePlayers(1)">+</button>
+        </div>
+
+        <label class="brand-subtitle mb-2 d-block">Category</label>
+        <div class="choice-grid mb-3" id="categoryGrid"></div>
+
+        <label class="brand-subtitle mb-2 d-block">Discussion timer</label>
+        <select id="timerSelect" class="select-game">
+          <option value="60">1 minute</option>
+          <option value="90" selected>90 seconds</option>
+          <option value="120">2 minutes</option>
+          <option value="180">3 minutes</option>
+        </select>
+      </div>
+
+      <div class="card-glass mb-3">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h2 class="h5 mb-0 fw-bold">Player Names</h2>
+          <button class="small-btn" type="button" onclick="randomNames()">Random</button>
+        </div>
+        <div class="player-list" id="playerList"></div>
+      </div>
+
+      <div class="d-grid gap-2 mt-auto">
+        <button class="btn-game" type="button" onclick="newMatch()">Start Match</button>
+        <button class="btn-game secondary" type="button" onclick="showScreen('homeScreen')">Back</button>
+      </div>
+    </section>
+
+    <section class="screen" id="loadingScreen">
+      <div class="image-screen loading-bg my-auto">
+        <div class="image-content text-center">
+          <div class="title mb-2">Discover the Impostor</div>
+          <p class="text-muted-game mb-3" id="loadingText">Preparing your game...</p>
+          <div class="loading-bar"><div class="loading-fill" id="loadingFill"></div></div>
+          <div class="brand-subtitle mt-3">Tip: Pay attention to every clue... or lie.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="passWordScreen">
+      <div class="card-glass secret-wrap">
+        <div class="emoji mb-3">🤫</div>
+        <div class="title">Pass the phone to</div>
+        <div class="huge-word my-3" id="wordPlayerName">Player 1</div>
+        <p class="text-muted-game">Only this player should look at the screen.</p>
+        <button class="btn-game mt-3" type="button" onclick="revealWord()">Reveal My Word</button>
+      </div>
+    </section>
+
+    <section class="screen" id="secretWordScreen">
+      <div class="card-glass secret-wrap">
+        <div class="brand-subtitle mb-2" id="secretWordLabel">Your secret word is</div>
+        <div class="huge-word reveal-glow" id="secretWordText">Pizza</div>
+        <p class="text-muted-game mt-3" id="secretWordHint">Remember it. Do not say it out loud.</p>
+        <button class="btn-game mt-4" type="button" onclick="hideWord()">Hide & Pass Phone</button>
+      </div>
+    </section>
+
+    <section class="screen" id="discussionScreen">
+      <div class="card-glass text-center my-auto">
+        <div class="emoji mb-2">🗣️</div>
+        <div class="title">Discuss Now</div>
+        <p class="text-muted-game">Give clues. Ask questions. The impostor must blend in.</p>
+        <div class="prompt-card my-3" id="promptText">Say one clue without using the word.</div>
+        <div class="timer-circle" id="timerCircle" style="--progress: 0deg;">
+          <div class="timer-inner" id="timerText">90</div>
+        </div>
+        <div class="d-grid gap-2">
+          <button class="btn-game" type="button" onclick="beginVoting()">Vote Now</button>
+          <button class="btn-game secondary" type="button" onclick="toggleTimer()" id="pauseButton">Pause Timer</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="screen" id="passVoteScreen">
+      <div class="card-glass secret-wrap">
+        <div class="emoji mb-3">🗳️</div>
+        <div class="title">Private Vote</div>
+        <p class="text-muted-game mb-1">Pass the phone to</p>
+        <div class="huge-word my-3" id="votePlayerName">Player 1</div>
+        <p class="text-muted-game">This player votes secretly. Nobody else should look.</p>
+        <div class="progress-dots" id="voteDotsA"></div>
+        <button class="btn-game mt-4" type="button" onclick="openVote()">Open Voting Screen</button>
+      </div>
+    </section>
+
+    <section class="screen" id="voteScreen">
+      <div class="card-glass my-auto">
+        <div class="title" id="voteTitle">Vote Secretly</div>
+        <p class="text-muted-game">Choose who you think is the impostor. You cannot vote for yourself.</p>
+        <div class="vote-grid mt-3" id="voteGrid"></div>
+        <div class="progress-dots" id="voteDotsB"></div>
+      </div>
+    </section>
+
+    <section class="screen" id="voteSavedScreen">
+      <div class="card-glass secret-wrap">
+        <div class="emoji mb-3">✅</div>
+        <div class="title">Vote Saved</div>
+        <p class="text-muted-game" id="voteSavedText">Hide the screen and pass the phone.</p>
+        <button class="btn-game mt-4" type="button" onclick="nextVoter()">Continue</button>
+      </div>
+    </section>
+
+    <section class="screen" id="resultScreen">
+      <div class="card-glass text-center my-auto">
+        <div class="emoji mb-3" id="resultEmoji">🎭</div>
+        <div class="result-badge mb-3" id="resultBadge">Result</div>
+        <div class="title" id="resultTitle">The impostor was...</div>
+        <div class="huge-word my-3" id="resultImpostorName">Player</div>
+        <p class="text-muted-game" id="resultText"></p>
+
+        <div class="card-glass text-start mt-3 p-3">
+          <div class="brand-subtitle mb-2">Vote Results</div>
+          <div class="score-list" id="scoreList"></div>
+        </div>
+
+        <div class="card-glass text-start mt-3 p-3">
+          <div class="brand-subtitle mb-2">Secret Words</div>
+          <div class="d-flex justify-content-between gap-3 mb-2"><b>Players:</b><span id="normalWordReveal"></span></div>
+          <div class="d-flex justify-content-between gap-3"><b>Impostor:</b><span id="impostorWordReveal"></span></div>
+        </div>
+
+        <div class="d-grid gap-2 mt-4">
+          <button class="btn-game" type="button" onclick="continueMatch()" id="continueButton">Next Round</button>
+          <button class="btn-game secondary" type="button" onclick="shareResult()">Share Result</button>
+          <button class="btn-game red" type="button" onclick="showScreen('setupScreen')">Change Setup</button>
+        </div>
+        <div class="ad-slot">AdMob interstitial placeholder</div>
+      </div>
+    </section>
+
+    <section class="screen" id="championScreen">
+      <div class="card-glass text-center my-auto">
+        <div class="emoji mb-3" id="championEmoji">🏆</div>
+        <div class="result-badge mb-3">Match Complete</div>
+        <div class="title" id="championTitle">Crew wins the match!</div>
+        <p class="text-muted-game mt-3" id="championText">Final score</p>
+        <div class="card-glass mt-3 p-3">
+          <div class="huge-word" id="finalScoreText">3 - 2</div>
+          <div class="brand-subtitle">Crew · Impostor</div>
+        </div>
+        <div class="d-grid gap-2 mt-4">
+          <button class="btn-game" type="button" onclick="newMatch()">Play New Match</button>
+          <button class="btn-game secondary" type="button" onclick="shareChampion()">Share Match</button>
+          <button class="btn-game red" type="button" onclick="showScreen('setupScreen')">Change Setup</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    const categories = {
+      food: { name: "Food Fight", emoji: "🍕", desc: "Easy, funny and perfect for the first round.", pairs: [["Pizza","Burger"],["Sushi","Tacos"],["Coffee","Tea"],["Cake","Donut"],["Pasta","Noodles"],["Ice Cream","Milkshake"],["Chicken","Turkey"],["Fries","Nachos"],["Apple","Orange"],["Chocolate","Candy"],["Soup","Salad"],["Steak","Fish"],["Hotdog","Sausage"],["Cheese","Butter"],["Rice","Beans"],["Cookie","Brownie"],["Lemon","Lime"],["Pancake","Waffle"],["Muffin","Cupcake"],["Ketchup","Mustard"],["Bacon","Ham"],["Cereal","Granola"],["Popcorn","Chips"],["Honey","Jam"],["Sandwich","Toast"],["Watermelon","Melon"],["Shrimp","Crab"],["Yogurt","Pudding"],["Onion","Garlic"],["Pepper","Chili"]] },
+      places: { name: "Places", emoji: "🌍", desc: "Great for suspicious and vague clues.", pairs: [["Beach","Pool"],["School","Library"],["Airport","Train Station"],["Cinema","Theater"],["Hospital","Pharmacy"],["Gym","Stadium"],["Hotel","Apartment"],["Zoo","Aquarium"],["Prison","Police Station"],["Mall","Supermarket"],["Church","Museum"],["Kitchen","Restaurant"],["Desert","Jungle"],["Castle","Palace"],["Park","Garden"],["Bar","Club"],["Office","Factory"],["Island","Mountain"],["Bus Stop","Taxi"],["Bridge","Tunnel"],["Bathroom","Bedroom"],["Attic","Basement"],["Classroom","Playground"],["Bakery","Cafe"],["Village","City"],["Camping","Hotel"],["Harbor","Boat"],["Farm","Barn"],["Salon","Spa"],["Roof","Balcony"]] },
+      pop: { name: "Pop Culture", emoji: "🎬", desc: "Movies, games, memes and internet chaos.", pairs: [["Superhero","Villain"],["Zombie","Vampire"],["Robot","Alien"],["Wizard","Witch"],["Pirate","Ninja"],["Streamer","YouTuber"],["Meme","Emoji"],["Dragon","Dinosaur"],["Detective","Spy"],["Monster","Ghost"],["Princess","Queen"],["Singer","Dancer"],["TikTok","Instagram"],["Netflix","Cinema"],["Gamer","Hacker"],["Jedi","Sith"],["Anime","Cartoon"],["Knight","Samurai"],["Elf","Orc"],["Clown","Magician"],["DJ","Rapper"],["Actor","Director"],["Podcast","Radio"],["Influencer","Celebrity"],["Comic","Novel"],["Marvel","DC"],["Manga","Webtoon"],["Knight","Viking"],["Streamer","Podcaster"],["Cosplay","Costume"]] },
+      awkward: { name: "Awkward Mode", emoji: "😳", desc: "More drama. Better with close friends.", pairs: [["First Date","Breakup"],["Secret Crush","Ex"],["Jealousy","Flirting"],["Bad Kiss","Bad Text"],["Party","Hangover"],["Red Flag","Green Flag"],["Truth","Dare"],["Drama","Gossip"],["Friendzone","Relationship"],["Excuse","Lie"],["Love","Regret"],["Secret","Rumor"],["Cheating","Forgiveness"],["Wedding","Divorce"],["Late Reply","Seen Zone"],["Cringe","Embarrassing"],["Awkward Hug","Handshake"],["Jealous Friend","Fake Friend"],["Toxic","Obsessed"],["Sneaky","Loyal"],["Ghosting","Blocking"],["Stalker","Fan"],["Confession","Denial"],["Heartbreak","Revenge"],["Argument","Silent Treatment"],["Screenshot","Leak"],["Rejected","Ignored"],["Flirt","Friend"],["Messy","Clean"],["Karma","Excuse"]] },
+      chaos: { name: "Chaos Mix", emoji: "🎲", desc: "Random words for maximum confusion.", pairs: [["Banana","Rocket"],["Clown","Doctor"],["Money","Secret"],["Mirror","Camera"],["Chair","Throne"],["Fire","Ice"],["Dog","Wolf"],["King","Queen"],["Rain","Snow"],["Phone","Tablet"],["Spider","Butterfly"],["Moon","Sun"],["Clock","Bomb"],["Knife","Spoon"],["Angel","Devil"],["Thunder","Storm"],["Toy","Weapon"],["Cloud","Smoke"],["Treasure","Trash"],["Monster","Baby"],["Shark","Whale"],["Shadow","Light"],["Coin","Diamond"],["Helmet","Crown"],["Paint","Blood"],["Cactus","Rose"],["Laptop","TV"],["Key","Lock"],["Pillow","Brick"],["Magnet","Battery"]] },
+      dirty: { name: "Dirty Pack", emoji: "🔥", desc: "Adult chaos and embarrassing clues.", pairs: [["Kiss","Bite"],["Bedroom","Bathroom"],["Lipstick","Perfume"],["Lingerie","Pajamas"],["Moan","Whisper"],["Massage","Tickle"],["Seduce","Tease"],["Body","Mind"],["Fantasy","Secret"],["Date Night","One Night"],["Slow","Fast"],["Dominant","Shy"],["Late Night","Morning After"],["Touch","Look"],["Hot","Wild"],["Forbidden","Risky"],["Passion","Temptation"],["Naughty","Innocent"],["Blindfold","Secret"],["Romance","Lust"],["Crush","Desire"],["Perfume","Sweat"],["Neck","Lips"],["Bed","Couch"],["Screenshot","Private Chat"],["Secret Pic","Voice Note"],["Jeans","Skirt"],["Hookup","Dating"],["Lip Bite","Wink"],["Spicy","Messy"]] },
+      teen: { name: "Teen Drama", emoji: "📱", desc: "School gossip and social media mess.", pairs: [["Homework","Exam"],["Teacher","Principal"],["Lunch","Recess"],["Snapchat","TikTok"],["Crush","Bestie"],["Prom","Party"],["Hallway","Classroom"],["Detention","Suspension"],["Cheerleader","Captain"],["Locker","Notebook"],["Cheat Sheet","Test"],["School Bus","Bike"],["Rumor","Screenshot"],["Study Group","Sleepover"],["Math","Science"],["Uniform","Hoodie"],["Notebook","iPad"],["Tutor","Coach"],["Drama Club","Football"],["Selfie","Mirror"],["Late","Absent"],["Secret Account","Fake Account"],["Playlist","Story"],["Texting","Calling"],["Lunch Table","Cafeteria"],["Promposal","Rejection"],["Teacher Crush","Student Crush"],["Popular","Invisible"],["Quiz","Project"],["Semester","Vacation"]] }
+    };
+
+    const randomPlayerNames = ["Alex", "Jess", "Mike", "Sam", "Tom", "Luna", "Nina", "Leo", "Max", "Ruby"];
+    const prompts = [
+      "Say one clue without using the word.",
+      "Describe the word like you are selling it.",
+      "Say where you would find it.",
+      "Give a clue that only real players understand.",
+      "Ask someone a suspicious question.",
+      "Say one emotion connected to the word.",
+      "Describe the color, shape or vibe.",
+      "Point at the most suspicious player."
+    ];
+
+    let selectedCategory = "food";
+    let playerCount = 4;
+    let players = ["Player 1", "Player 2", "Player 3", "Player 4"];
+    let currentWordPlayer = 0;
+    let currentVoter = 0;
+    let impostorIndex = 0;
+    let normalWord = "";
+    let impostorWord = "";
+    let words = [];
+    let votes = [];
+    let timerTotal = 90;
+    let timerLeft = 90;
+    let timerInterval = null;
+    let loadingTimeout = null;
+    let timerPaused = false;
+    let currentRound = 1;
+    let maxRounds = 5;
+    let crewScore = 0;
+    let impostorScore = 0;
+    let lastWinner = "";
+
+    function el(id) { return document.getElementById(id); }
+
+    function showScreen(id) {
+      document.querySelectorAll(".screen").forEach(function(screen) { screen.classList.remove("active"); });
+      el(id).classList.add("active");
+      window.scrollTo(0, 0);
+    }
+
+    function updateRoundBox() {
+      el("roundBox").innerHTML = "Round " + currentRound + "/" + maxRounds + "<br>Crew " + crewScore + " · Impostor " + impostorScore;
+    }
+
+    function escapeText(text) {
+      return String(text).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+    }
+
+    function vibrate() {
+      if (navigator.vibrate) navigator.vibrate([70, 35, 70]);
+      document.body.classList.add("shake");
+      setTimeout(function() { document.body.classList.remove("shake"); }, 300);
+    }
+
+    function renderCategories() {
+      const box = el("categoryGrid");
+      box.innerHTML = "";
+      Object.keys(categories).forEach(function(key) {
+        const category = categories[key];
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "choice-card" + (selectedCategory === key ? " selected" : "");
+        button.innerHTML = `<div class="choice-title">${category.emoji} ${category.name}</div><div class="choice-desc">${category.desc}</div>`;
+        button.onclick = function() { selectedCategory = key; renderCategories(); };
+        box.appendChild(button);
+      });
+    }
+
+    function renderPlayers() {
+      el("playerCountText").textContent = playerCount;
+      const box = el("playerList");
+      box.innerHTML = "";
+      for (let i = 0; i < playerCount; i++) {
+        if (!players[i]) players[i] = "Player " + (i + 1);
+        const row = document.createElement("div");
+        row.className = "player-row";
+        row.innerHTML = `<div class="avatar">${i + 1}</div><input class="input-game" value="${escapeText(players[i])}" placeholder="Player ${i + 1}">`;
+        const input = row.querySelector("input");
+        input.oninput = function() { players[i] = input.value.trim() || "Player " + (i + 1); };
+        box.appendChild(row);
+      }
+    }
+
+    function changePlayers(amount) {
+      const next = Math.max(4, Math.min(10, playerCount + amount));
+      if (next === playerCount) { vibrate(); return; }
+      playerCount = next;
+      players = players.slice(0, playerCount);
+      while (players.length < playerCount) players.push("Player " + (players.length + 1));
+      renderPlayers();
+    }
+
+    function randomNames() {
+      players = [];
+      for (let i = 0; i < playerCount; i++) players.push(randomPlayerNames[i] || "Player " + (i + 1));
+      renderPlayers();
+    }
+
+    function newMatch() {
+      currentRound = 1;
+      crewScore = 0;
+      impostorScore = 0;
+      updateRoundBox();
+      startRound();
+    }
+
+    function prepareRound() {
+      currentWordPlayer = 0;
+      currentVoter = 0;
+      votes = Array(playerCount).fill(null);
+      timerTotal = Number(el("timerSelect").value);
+      timerLeft = timerTotal;
+      timerPaused = false;
+
+      const category = categories[selectedCategory];
+      const pair = category.pairs[Math.floor(Math.random() * category.pairs.length)];
+      const swap = Math.random() > 0.5;
+      normalWord = swap ? pair[1] : pair[0];
+      impostorWord = swap ? pair[0] : pair[1];
+      impostorIndex = Math.floor(Math.random() * playerCount);
+      words = [];
+      for (let i = 0; i < playerCount; i++) words.push(i === impostorIndex ? impostorWord : normalWord);
+    }
+
+    function startRound() {
+      clearInterval(timerInterval);
+      clearTimeout(loadingTimeout);
+      updateRoundBox();
+      prepareRound();
+      el("loadingText").textContent = "Preparing round " + currentRound + " of " + maxRounds + "...";
+      el("loadingFill").classList.remove("run");
+      void el("loadingFill").offsetWidth;
+      el("loadingFill").classList.add("run");
+      showScreen("loadingScreen");
+      loadingTimeout = setTimeout(function() {
+        el("wordPlayerName").textContent = players[0];
+        showScreen("passWordScreen");
+      }, 5000);
+    }
+
+    function revealWord() {
+      const isImpostor = currentWordPlayer === impostorIndex;
+      el("secretWordLabel").textContent = isImpostor ? "You are suspicious. Your word is" : "Your secret word is";
+      el("secretWordText").textContent = words[currentWordPlayer];
+      el("secretWordHint").textContent = isImpostor ? "Blend in. Do not get caught." : "Remember it. Do not say it out loud.";
+      showScreen("secretWordScreen");
+    }
+
+    function hideWord() {
+      currentWordPlayer++;
+      if (currentWordPlayer >= playerCount) { startDiscussion(); return; }
+      el("wordPlayerName").textContent = players[currentWordPlayer];
+      showScreen("passWordScreen");
+    }
+
+    function startDiscussion() {
+      clearInterval(timerInterval);
+      timerPaused = false;
+      el("pauseButton").textContent = "Pause Timer";
+      el("promptText").textContent = prompts[Math.floor(Math.random() * prompts.length)];
+      updateTimerUI();
+      timerInterval = setInterval(function() {
+        if (timerPaused) return;
+        timerLeft--;
+        updateTimerUI();
+        if (timerLeft <= 0) { clearInterval(timerInterval); vibrate(); beginVoting(); }
+      }, 1000);
+      showScreen("discussionScreen");
+    }
+
+    function updateTimerUI() {
+      el("timerText").textContent = timerLeft;
+      const used = timerTotal - timerLeft;
+      const degrees = Math.min(360, Math.max(0, used / timerTotal * 360));
+      el("timerCircle").style.setProperty("--progress", degrees + "deg");
+    }
+
+    function toggleTimer() {
+      timerPaused = !timerPaused;
+      el("pauseButton").textContent = timerPaused ? "Resume Timer" : "Pause Timer";
+    }
+
+    function beginVoting() {
+      clearInterval(timerInterval);
+      currentVoter = 0;
+      votes = Array(playerCount).fill(null);
+      showVotePass();
+    }
+
+    function renderVoteDots(id) {
+      const box = el(id);
+      box.innerHTML = "";
+      for (let i = 0; i < playerCount; i++) {
+        const dot = document.createElement("div");
+        dot.className = "dot" + (votes[i] !== null ? " done" : "");
+        box.appendChild(dot);
+      }
+    }
+
+    function showVotePass() {
+      el("votePlayerName").textContent = players[currentVoter];
+      renderVoteDots("voteDotsA");
+      showScreen("passVoteScreen");
+    }
+
+    function openVote() {
+      el("voteTitle").textContent = players[currentVoter] + ", vote secretly";
+      const grid = el("voteGrid");
+      grid.innerHTML = "";
+      for (let i = 0; i < playerCount; i++) {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "vote-card" + (i === currentVoter ? " disabled" : "");
+        button.innerHTML = `<div>${escapeText(players[i])}</div><div class="brand-subtitle">${i === currentVoter ? "You" : "Player " + (i + 1)}</div>`;
+        if (i !== currentVoter) button.onclick = function() { saveVote(i); };
+        grid.appendChild(button);
+      }
+      renderVoteDots("voteDotsB");
+      showScreen("voteScreen");
+    }
+
+    function saveVote(votedPlayer) {
+      votes[currentVoter] = votedPlayer;
+      el("voteSavedText").textContent = players[currentVoter] + "'s vote is saved. Hide the screen and pass the phone.";
+      showScreen("voteSavedScreen");
+    }
+
+    function nextVoter() {
+      currentVoter++;
+      if (currentVoter >= playerCount) { showResults(); return; }
+      showVotePass();
+    }
+
+    function getVoteCounts() {
+      const counts = Array(playerCount).fill(0);
+      votes.forEach(function(vote) { if (vote !== null) counts[vote]++; });
+      return counts;
+    }
+
+    function showResults() {
+      const counts = getVoteCounts();
+      const maxVotes = Math.max.apply(null, counts);
+      const topVoted = [];
+      counts.forEach(function(count, index) { if (count === maxVotes) topVoted.push(index); });
+      const caught = topVoted.length === 1 && topVoted[0] === impostorIndex;
+      const impostorName = players[impostorIndex];
+
+      if (caught) { crewScore++; lastWinner = "Crew"; } else { impostorScore++; lastWinner = "Impostor"; }
+      updateRoundBox();
+
+      el("resultEmoji").textContent = caught ? "✅" : "😈";
+      el("resultBadge").textContent = caught ? "Crew Wins Round " + currentRound : "Impostor Wins Round " + currentRound;
+      el("resultTitle").textContent = caught ? "You caught the impostor!" : "The impostor escaped!";
+      el("resultImpostorName").textContent = impostorName;
+
+      if (topVoted.length > 1) {
+        el("resultText").textContent = caught ? "There was a tie, but the impostor was among the most voted players." : "There was a tie, and the impostor survived the chaos.";
+      } else {
+        const votedOut = players[topVoted[0]];
+        el("resultText").textContent = caught ? impostorName + " received the most votes. Good detective work." : votedOut + " received the most votes, but " + impostorName + " was the real impostor.";
+      }
+
+      el("normalWordReveal").textContent = normalWord;
+      el("impostorWordReveal").textContent = impostorWord;
+      renderScores(counts, topVoted);
+      el("continueButton").textContent = currentRound >= maxRounds ? "Show Champion" : "Next Round";
+      showScreen("resultScreen");
+    }
+
+    function renderScores(counts, topVoted) {
+      const list = el("scoreList");
+      list.innerHTML = "";
+      for (let i = 0; i < playerCount; i++) {
+        const row = document.createElement("div");
+        row.className = "score-row" + (topVoted.includes(i) ? " winner" : "");
+        row.innerHTML = `<div><b>${escapeText(players[i])}</b><div class="brand-subtitle">${i === impostorIndex ? "Impostor" : "Player"}</div></div><div><b>${counts[i]}</b> votes</div>`;
+        list.appendChild(row);
+      }
+    }
+
+    function continueMatch() {
+      if (currentRound >= maxRounds) { showChampion(); return; }
+      currentRound++;
+      startRound();
+    }
+
+    function showChampion() {
+      const crewWins = crewScore > impostorScore;
+      const tie = crewScore === impostorScore;
+      el("championEmoji").textContent = tie ? "🤝" : crewWins ? "🕵️" : "😈";
+      el("championTitle").textContent = tie ? "The match is a tie!" : crewWins ? "Crew wins the match!" : "Impostor wins the match!";
+      el("championText").textContent = tie ? "Nobody fully trusted anyone." : crewWins ? "The group exposed enough lies to win." : "The impostors fooled the room.";
+      el("finalScoreText").textContent = crewScore + " - " + impostorScore;
+      showScreen("championScreen");
+    }
+
+    async function shareResult() {
+      const text = "Round " + currentRound + " of Impostor Local: " + lastWinner + " won. The impostor was " + players[impostorIndex] + " 😈";
+      shareText(text);
+    }
+
+    async function shareChampion() {
+      const text = "We played Impostor Local. Final score: Crew " + crewScore + " - " + impostorScore + " Impostor. Can your group beat us?";
+      shareText(text);
+    }
+
+    async function shareText(text) {
+      if (navigator.share) {
+        try { await navigator.share({ title: "Impostor Local", text: text }); } catch (e) {}
+      } else {
+        try { await navigator.clipboard.writeText(text); alert("Copied!"); } catch (e) { alert(text); }
+      }
+    }
+
+    updateRoundBox();
+    renderCategories();
+    renderPlayers();
+  </script>
+</body>
+</html>
