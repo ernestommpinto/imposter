@@ -1,0 +1,15 @@
+{
+  "name": "Impostor Local",
+  "short_name": "Impostor",
+  "description": "Jogo local do impostor em português para Android.",
+  "lang": "pt-PT",
+  "start_url": "index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#070814",
+  "theme_color": "#070814",
+  "icons": [
+    { "src": "img/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
